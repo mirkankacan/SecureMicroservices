@@ -1,7 +1,10 @@
-﻿using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using IdentityModel;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.Net.Http.Headers;
 using Movies.WebUI.ApiServices;
 using Movies.WebUI.HttpHandlers;
@@ -29,10 +32,16 @@ builder.Services.AddAuthentication(opts =>
         {
             opts.Scope.Add(scope);
         }
+        opts.ClaimActions.MapUniqueJsonKey("role", "role", "role");
 
         opts.MapInboundClaims = false;
         opts.SaveTokens = true;
         opts.GetClaimsFromUserInfoEndpoint = true;
+        opts.TokenValidationParameters = new TokenValidationParameters
+        {
+            NameClaimType = JwtClaimTypes.GivenName,
+            RoleClaimType = JwtClaimTypes.Role,
+        };
     });
 
 builder.Services.AddTransient<AuthenticationDelegatingHandler>();
@@ -46,12 +55,12 @@ builder.Services.AddHttpClient("MoviesAPIClient", client =>
 
 builder.Services.AddHttpContextAccessor();
 
-//builder.Services.AddHttpClient("IDPClient", client =>
-//{
-//    client.BaseAddress = new Uri(builder.Configuration["Authentication:IdentityServer"]!);
-//    client.DefaultRequestHeaders.Clear();
-//    client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
-//});
+builder.Services.AddHttpClient("IDPClient", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Authentication:IdentityServer"]!);
+    client.DefaultRequestHeaders.Clear();
+    client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+});
 
 //builder.Services.AddSingleton(new ClientCredentialsTokenRequest
 //{

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Movies.WebUI.ApiServices;
@@ -26,18 +27,25 @@ namespace Movies.WebUI.Controllers
         private async Task LogTokenAndClaims()
         {
             var identityToken = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.IdToken);
-            Console.WriteLine($"Identity token : {identityToken}");
+            Console.WriteLine($"Token : {identityToken}");
 
             foreach (var claim in User.Claims)
             {
-                Console.WriteLine($"Claim type : {claim.Type} Claim value : {claim.Value}");
+                Console.WriteLine($"Claim type : {claim.Type} / Claim value : {claim.Value}");
             }
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> OnlyAdmin()
+        {
+            var userInfo = await _movieApiService.GetUserInfo();
+            return View(userInfo);
         }
 
         // GET: Movies
         public async Task<IActionResult> Index()
         {
-            LogTokenAndClaims();
+            await LogTokenAndClaims();
             return View(await _movieApiService.GetMovies());
         }
 

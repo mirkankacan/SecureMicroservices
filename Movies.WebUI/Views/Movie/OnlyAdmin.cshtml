@@ -1,0 +1,15 @@
+﻿@model UserInfoViewModel
+@{
+    ViewData["Title"] = "OnlyAdmin";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<h6>
+    @foreach (var claim in Model.UserInfoDictionary)
+    {
+        <p>@claim.Key: @claim.Value</p>
+    }
+</h6>
+
+
