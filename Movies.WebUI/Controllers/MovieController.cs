@@ -1,4 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using Movies.WebUI.ApiServices;
 using Movies.WebUI.Models;
 
@@ -13,9 +17,27 @@ namespace Movies.WebUI.Controllers
             _movieApiService = movieApiService;
         }
 
+        public async Task Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await HttpContext.SignOutAsync(OpenIdConnectDefaults.AuthenticationScheme);
+        }
+
+        private async Task LogTokenAndClaims()
+        {
+            var identityToken = await HttpContext.GetTokenAsync(OpenIdConnectParameterNames.IdToken);
+            Console.WriteLine($"Identity token : {identityToken}");
+
+            foreach (var claim in User.Claims)
+            {
+                Console.WriteLine($"Claim type : {claim.Type} Claim value : {claim.Value}");
+            }
+        }
+
         // GET: Movies
         public async Task<IActionResult> Index()
         {
+            LogTokenAndClaims();
             return View(await _movieApiService.GetMovies());
         }
 

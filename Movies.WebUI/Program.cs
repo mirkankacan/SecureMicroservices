@@ -1,9 +1,68 @@
-﻿using Movies.WebUI.ApiServices;
+﻿using IdentityModel.Client;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.Net.Http.Headers;
+using Movies.WebUI.ApiServices;
+using Movies.WebUI.HttpHandlers;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+
+builder.Services.AddAuthentication(opts =>
+{
+    opts.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    opts.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+})
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, opts =>
+    {
+        opts.Authority = builder.Configuration["Authentication:IdentityServer"]!;
+        opts.ClientId = builder.Configuration["Authentication:ClientId"]!;
+        opts.ClientSecret = builder.Configuration["Authentication:ClientSecret"]!;
+        opts.ResponseType = builder.Configuration["Authentication:ResponseType"]!;
+
+        opts.Scope.Add("openid");
+        opts.Scope.Add("profile");
+
+        opts.MapInboundClaims = false;
+        opts.SaveTokens = true;
+        opts.GetClaimsFromUserInfoEndpoint = true;
+    });
+
+builder.Services.AddTransient<AuthenticationDelegatingHandler>();
+
+builder.Services.AddHttpClient("MoviesAPIClient", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Authentication:ApiAddress"]!);
+    client.DefaultRequestHeaders.Clear();
+    client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+}).AddHttpMessageHandler<AuthenticationDelegatingHandler>();
+
+builder.Services.AddHttpClient("IDPClient", client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["Authentication:IdentityServer"]!);
+    client.DefaultRequestHeaders.Clear();
+    client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+});
+
+builder.Services.AddSingleton(new ClientCredentialsTokenRequest
+{
+    Address = builder.Configuration["Authentication:TokenAddress"]!,
+    ClientId = builder.Configuration["Authentication:ApiClientId"]!,
+    ClientSecret = builder.Configuration["Authentication:ClientSecret"]!,
+    Scope = builder.Configuration["Authentication:ApiScope"]!
+});
+
+builder.Services.AddControllersWithViews(options =>
+{
+    var policy = new AuthorizationPolicyBuilder()
+                     .RequireAuthenticatedUser()
+                     .Build();
+    options.Filters.Add(new AuthorizeFilter(policy));
+});
 
 builder.Services.AddScoped<IMovieApiService, MovieApiService>();
 
@@ -21,6 +80,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
