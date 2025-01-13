@@ -35,6 +35,11 @@ namespace Movies.WebUI.Controllers
             }
         }
 
+        [AllowAnonymous]
+        public async Task<IActionResult> AccessDenied()
+        {
+            return View();
+        }
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> OnlyAdmin()
         {

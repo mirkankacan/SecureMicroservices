@@ -18,9 +18,13 @@ builder.Services.AddAuthentication(opts =>
     opts.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     opts.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
 })
-    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme, opts =>
+    {
+        opts.AccessDeniedPath = "/Movie/AccessDenied";
+    })
     .AddOpenIdConnect(OpenIdConnectDefaults.AuthenticationScheme, opts =>
     {
+
         opts.Authority = builder.Configuration["Authentication:IdentityServer"]!;
         opts.ClientId = builder.Configuration["Authentication:ClientId"]!;
         opts.ClientSecret = builder.Configuration["Authentication:ClientSecret"]!;
