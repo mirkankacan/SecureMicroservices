@@ -15,10 +15,7 @@ builder.Services.AddAuthentication("Bearer")
             ValidateAudience = false
         };
     });
-builder.Services.AddAuthorization(opts =>
-{
-    opts.AddPolicy("ClientIdPolicy", policy => policy.RequireClaim("client_id", builder.Configuration["Authentication:ApiClientId"]!));
-});
+
 builder.Services.AddDbContext<MoviesContext>(options =>
     options.UseInMemoryDatabase("Movies"));
 

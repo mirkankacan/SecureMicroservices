@@ -1,5 +1,4 @@
-﻿using IdentityModel.Client;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc.Authorization;
@@ -24,8 +23,12 @@ builder.Services.AddAuthentication(opts =>
         opts.ClientSecret = builder.Configuration["Authentication:ClientSecret"]!;
         opts.ResponseType = builder.Configuration["Authentication:ResponseType"]!;
 
-        opts.Scope.Add("openid");
-        opts.Scope.Add("profile");
+        var scopes = builder.Configuration.GetSection("Authentication:Scopes").Get<List<string>>()!;
+
+        foreach (var scope in scopes)
+        {
+            opts.Scope.Add(scope);
+        }
 
         opts.MapInboundClaims = false;
         opts.SaveTokens = true;
@@ -41,20 +44,22 @@ builder.Services.AddHttpClient("MoviesAPIClient", client =>
     client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
 }).AddHttpMessageHandler<AuthenticationDelegatingHandler>();
 
-builder.Services.AddHttpClient("IDPClient", client =>
-{
-    client.BaseAddress = new Uri(builder.Configuration["Authentication:IdentityServer"]!);
-    client.DefaultRequestHeaders.Clear();
-    client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
-});
+builder.Services.AddHttpContextAccessor();
 
-builder.Services.AddSingleton(new ClientCredentialsTokenRequest
-{
-    Address = builder.Configuration["Authentication:TokenAddress"]!,
-    ClientId = builder.Configuration["Authentication:ApiClientId"]!,
-    ClientSecret = builder.Configuration["Authentication:ClientSecret"]!,
-    Scope = builder.Configuration["Authentication:ApiScope"]!
-});
+//builder.Services.AddHttpClient("IDPClient", client =>
+//{
+//    client.BaseAddress = new Uri(builder.Configuration["Authentication:IdentityServer"]!);
+//    client.DefaultRequestHeaders.Clear();
+//    client.DefaultRequestHeaders.Add(HeaderNames.Accept, "application/json");
+//});
+
+//builder.Services.AddSingleton(new ClientCredentialsTokenRequest
+//{
+//    Address = builder.Configuration["Authentication:TokenAddress"]!,
+//    ClientId = builder.Configuration["Authentication:ApiClientId"]!,
+//    ClientSecret = builder.Configuration["Authentication:ClientSecret"]!,
+//    Scope = builder.Configuration["Authentication:ApiScope"]!
+//});
 
 builder.Services.AddControllersWithViews(options =>
 {

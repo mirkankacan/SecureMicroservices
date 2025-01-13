@@ -15,13 +15,14 @@ namespace IdentityServer
                     ClientId = "movies_api_client",
                     AllowedGrantTypes = GrantTypes.ClientCredentials,
                     ClientSecrets = { new Secret("secretkey".Sha256()) },
-                    AllowedScopes={"movieAPI"}
+                    AllowedScopes={"moviesAPI"}
                 },
               new Client
                 {
                     ClientId = "movies_mvc_client",
                     ClientName = "Movies MVC Web UI",
-                    AllowedGrantTypes = GrantTypes.Code,
+                    AllowedGrantTypes = GrantTypes.Hybrid,
+                    RequirePkce=false,
                     AllowRememberConsent = false,
                     RedirectUris = { "https://localhost:3002/signin-oidc" },
                     PostLogoutRedirectUris = { "https://localhost:3002/signout-callback-oidc" },
@@ -29,14 +30,15 @@ namespace IdentityServer
                     AllowedScopes = new List<string>()
                     {
                         IdentityServerConstants.StandardScopes.OpenId,
-                        IdentityServerConstants.StandardScopes.Profile
+                        IdentityServerConstants.StandardScopes.Profile,
+                        "moviesAPI"
                     }
                 }
         };
 
         public static IEnumerable<ApiScope> ApiScopes => new ApiScope[]
         {
-            new ApiScope("movieAPI","Movie API")
+            new ApiScope("moviesAPI","Movies API")
         };
 
         public static IEnumerable<ApiResource> ApiResources => new ApiResource[]
